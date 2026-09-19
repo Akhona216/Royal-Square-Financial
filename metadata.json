@@ -1,0 +1,6 @@
+{
+  "name": "Royal Square Financial (Pty) Ltd",
+  "description": "Executive financial-services platform for clients and financial advisers, featuring net worth management, goals, motor claims wizard, service requests, and insurer integrations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
