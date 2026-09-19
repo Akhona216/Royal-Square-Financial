@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
+import { NotificationBell } from '../notifications/NotificationBell.js';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -83,6 +84,9 @@ export const Header: React.FC<HeaderProps> = () => {
               )}
             </div>
           )}
+
+          {/* Global Notification Center */}
+          {user && <NotificationBell />}
 
           {/* User Profile & Account Dropdown */}
           <div className="relative pl-2 border-l border-[#D9D9D9]" ref={dropdownRef}>

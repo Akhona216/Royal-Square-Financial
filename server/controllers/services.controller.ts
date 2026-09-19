@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { servicesService } from '../services/services.service.js';
+import { notificationsService } from '../services/notifications.service.js';
 
 export class ServicesController {
   async getServiceRequests(req: Request, res: Response, Next: NextFunction) {
@@ -37,6 +38,10 @@ export class ServicesController {
         urgency,
         supportingDocuments,
       });
+
+      // Dispatch real-time global notification
+      notificationsService.notifyServiceRequest(request, 'created');
+
       return res.status(201).json({ success: true, data: request });
     } catch (error: any) {
       Next(error);
@@ -50,6 +55,10 @@ export class ServicesController {
       if (!updated) {
         return res.status(404).json({ success: false, message: 'Service request not found' });
       }
+
+      // Dispatch notification for service request status/note update
+      notificationsService.notifyServiceRequest(updated, 'updated');
+
       return res.status(200).json({ success: true, data: updated });
     } catch (error: any) {
       Next(error);
@@ -58,3 +67,4 @@ export class ServicesController {
 }
 
 export const servicesController = new ServicesController();
+

@@ -18,9 +18,12 @@ import { Modal } from '../../components/common/Modal.js';
 import { Select } from '../../components/common/Input.js';
 import { api } from '../../services/api.js';
 import { ServiceRequest } from '../../types/index.js';
+import { useNotifications } from '../../context/NotificationContext.js';
 
 export const ServiceRequestsQueue: React.FC = () => {
+  const { fetchNotifications } = useNotifications();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedReq, setSelectedReq] = useState<ServiceRequest | null>(null);
   const [statusActionModal, setStatusActionModal] = useState<boolean>(false);
@@ -62,6 +65,7 @@ export const ServiceRequestsQueue: React.FC = () => {
       });
       setStatusActionModal(false);
       loadRequests();
+      fetchNotifications();
     } catch (err: any) {
       alert(err.message || 'Failed to update request');
     } finally {

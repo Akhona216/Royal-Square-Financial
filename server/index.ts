@@ -25,8 +25,9 @@ export function createExpressApp(): Express {
     res.json({ status: 'ok', platform: 'Royal Square Financial (Pty) Ltd REST API', timestamp: new Date().toISOString() });
   });
 
-  // Mount API v1 router
+  // Mount API router on both /api/v1 and /api for compatibility
   app.use('/api/v1', apiRouter);
+  app.use('/api', apiRouter);
 
   // Centralized error handling
   app.use(errorHandler);

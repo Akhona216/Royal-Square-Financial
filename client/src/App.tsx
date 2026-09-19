@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
+import { NotificationProvider } from './context/NotificationContext.js';
 import { AppLayout } from './components/layout/AppLayout.js';
 
 // Auth Pages
@@ -117,9 +118,12 @@ export const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 };
+
 
 export default App;

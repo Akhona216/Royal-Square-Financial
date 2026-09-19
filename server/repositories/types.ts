@@ -65,6 +65,13 @@ export interface Goal {
 }
 
 export type ClaimTimelineStage = 
+  | 'Submitted'
+  | 'Received'
+  | 'Assessed'
+  | 'Authorised'
+  | 'In Progress'
+  | 'Completed'
+  | 'Ready for Collection'
   | 'Accident Reported' 
   | 'Claim Submitted' 
   | 'Claim Number Received' 
@@ -78,6 +85,7 @@ export interface ClaimTimelineEvent {
   date: string;
   status: 'completed' | 'in_progress' | 'pending';
   notes?: string;
+  updatedBy?: string;
 }
 
 export interface Claim {
@@ -114,9 +122,19 @@ export interface Claim {
   };
   estimatedAmount?: number;
   settlementAmount?: number;
+  repairerInfo?: {
+    name?: string;
+    contact?: string;
+    assessorName?: string;
+    workshopAddress?: string;
+  };
+  partsStatus?: string;
+  estimatedCompletionDate?: string;
+  authorizedAmount?: number;
+  excessPayable?: number;
   currentStage: ClaimTimelineStage;
   timeline: ClaimTimelineEvent[];
-  status: 'Pending' | 'In Review' | 'Authorized' | 'Repairing' | 'Settled' | 'Rejected';
+  status: 'Pending' | 'In Review' | 'Authorized' | 'Repairing' | 'Completed' | 'Ready for Collection' | 'Settled' | 'Rejected';
   createdAt: string;
   updatedAt: string;
 }
@@ -212,3 +230,129 @@ export interface InsurerIntegration {
   endpointUrl: string;
   apiHealth: 'Healthy' | 'Degraded' | 'Offline';
 }
+
+export type NotificationType = 'service_request' | 'birthday' | 'policy_renewal' | 'claim_update';
+export type NotificationPriority = 'high' | 'medium' | 'low';
+
+export interface NotificationItem {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  priority: NotificationPriority;
+  targetRole: 'client' | 'adviser' | 'all';
+  clientId?: string;
+  clientName?: string;
+  referenceId?: string;
+  link?: string;
+  actionLabel?: string;
+  metadata?: {
+    birthdayDate?: string;
+    formattedBirthday?: string;
+    birthYear?: number;
+    ageTurning?: number;
+    daysRemaining?: number;
+    idNumber?: string;
+    policyNumber?: string;
+    provider?: string;
+    renewalDate?: string;
+    premium?: number;
+    coverageAmount?: number;
+    requestType?: string;
+    requestStatus?: string;
+    urgency?: string;
+    greetingSent?: boolean;
+    greetingDate?: string;
+    claimNumber?: string;
+    stage?: string;
+    repairerName?: string;
+  };
+}
+
+export interface NotificationStats {
+  total: number;
+  unread: number;
+  serviceRequests: number;
+  birthdays: number;
+  renewals: number;
+  claims?: number;
+}
+
+export interface AddressDetails {
+  street: string;
+  suburb: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface PostalAddressDetails {
+  sameAsResidential: boolean;
+  street?: string;
+  suburb?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+export interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+  alternativePhone?: string;
+  email?: string;
+}
+
+export interface BankingDetails {
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  accountType: 'Cheque / Current' | 'Savings' | 'Transmission';
+  branchCode: string;
+  verificationStatus: 'verified' | 'pending_verification' | 'unverified';
+  verifiedAt?: string;
+  verificationRequiredNote?: string;
+}
+
+export interface ClientProfile extends User {
+  residentialAddress: AddressDetails;
+  postalAddress: PostalAddressDetails;
+  emergencyContact: EmergencyContact;
+  bankingDetails: BankingDetails;
+  maritalStatus?: string;
+  occupation?: string;
+  employer?: string;
+  preferredCommunication?: 'Email' | 'SMS' | 'Phone' | 'WhatsApp';
+  preferredLanguage?: string;
+  lastUpdated: string;
+}
+
+export interface AuditLogChange {
+  field: string;
+  label: string;
+  oldValue: any;
+  newValue: any;
+  sensitive?: boolean;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  userRole: 'client' | 'adviser' | 'system' | 'provider';
+  action: string; // e.g. 'PROFILE_UPDATED', 'BANKING_DETAILS_CHANGED', 'INSURER_REPAIR_UPDATE'
+  category: 'profile' | 'claims' | 'banking' | 'security' | 'integration';
+  entityId: string;
+  entityType: 'user' | 'claim' | 'service_request' | 'integration';
+  description: string;
+  changes?: AuditLogChange[];
+  status: 'SUCCESS' | 'FLAGGED_FOR_VERIFICATION' | 'REJECTED';
+  ipAddress?: string;
+}
+
+

@@ -14,6 +14,11 @@ import {
   Calendar,
   Send,
   HelpCircle,
+  Wrench,
+  Sparkles,
+  RefreshCw,
+  Building2,
+  Phone,
 } from 'lucide-react';
 import { Card } from '../../components/common/Card.js';
 import { Button } from '../../components/common/Button.js';
@@ -24,12 +29,31 @@ import { Modal } from '../../components/common/Modal.js';
 import { EmptyState } from '../../components/common/EmptyState.js';
 import { api } from '../../services/api.js';
 import { Claim, ClaimTimelineStage } from '../../types/index.js';
+import { useNotifications } from '../../context/NotificationContext.js';
 
 export const MotorClaimsWizard: React.FC = () => {
+  const { fetchNotifications } = useNotifications();
   const [claims, setClaims] = useState<Claim[]>([]);
   const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
+
+  // Insurer Telemetry Simulation Modal state
+  const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState<boolean>(false);
+  const [telemetryProvider, setTelemetryProvider] = useState<string>('santam');
+  const [telemetryStage, setTelemetryStage] = useState<string>('In Progress');
+  const [telemetryStatus, setTelemetryStatus] = useState<string>('In Progress');
+  const [telemetryNotes, setTelemetryNotes] = useState<string>('Vehicle panels primed & color-matched. Re-assembly scheduled.');
+  const [telemetryRepairerName, setTelemetryRepairerName] = useState<string>('Precision Auto Craft Panelbeaters');
+  const [telemetryWorkshopAddress, setTelemetryWorkshopAddress] = useState<string>('12 Bowling Avenue, Kramerville, Sandton');
+  const [telemetryRepairerContact, setTelemetryRepairerContact] = useState<string>('+27 11 883 4000');
+  const [telemetryAssessorName, setTelemetryAssessorName] = useState<string>('Gert van Zyl (Senior Assessor)');
+  const [telemetryPartsStatus, setTelemetryPartsStatus] = useState<string>('OEM parts delivered to repair bay');
+  const [telemetryEstDate, setTelemetryEstDate] = useState<string>('2026-10-28');
+  const [telemetryAuthAmount, setTelemetryAuthAmount] = useState<string>('42500');
+  const [telemetryExcess, setTelemetryExcess] = useState<string>('3500');
+  const [telemetrySubmitting, setTelemetrySubmitting] = useState<boolean>(false);
+  const [telemetrySuccess, setTelemetrySuccess] = useState<string | null>(null);
 
   // Wizard Steps (1 to 5)
   const [step, setStep] = useState<number>(1);
@@ -145,6 +169,46 @@ export const MotorClaimsWizard: React.FC = () => {
       alert(err.message || 'Failed to submit claim');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSendTelemetryUpdate = async () => {
+    if (!activeClaim) return;
+    setTelemetrySubmitting(true);
+    setTelemetrySuccess(null);
+    try {
+      const res = await api.providers.sendRepairUpdate(
+        telemetryProvider,
+        activeClaim.claimNumber,
+        {
+          stage: telemetryStage,
+          status: telemetryStatus,
+          notes: telemetryNotes,
+          repairer: {
+            name: telemetryRepairerName,
+            contact: telemetryRepairerContact,
+            workshopAddress: telemetryWorkshopAddress,
+            assessorName: telemetryAssessorName,
+          },
+          partsStatus: telemetryPartsStatus,
+          estimatedCompletionDate: telemetryEstDate,
+          authorizedAmount: telemetryAuthAmount ? Number(telemetryAuthAmount) : undefined,
+          excessPayable: telemetryExcess ? Number(telemetryExcess) : undefined,
+        }
+      );
+
+      setTelemetrySuccess(res.message || 'Vehicle repair telemetry update processed successfully!');
+      await loadClaims();
+      await fetchNotifications();
+      setTimeout(() => {
+        setIsTelemetryModalOpen(false);
+        setTelemetrySuccess(null);
+      }, 1500);
+    } catch (err: any) {
+      console.error('Failed to send telemetry update:', err);
+      alert(err.message || 'Failed to dispatch provider update.');
+    } finally {
+      setTelemetrySubmitting(false);
     }
   };
 

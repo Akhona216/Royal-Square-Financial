@@ -5,7 +5,47 @@ export interface IClaimsRepository {
   getClaimById(id: string): Promise<Claim | null>;
   createClaim(claimData: Omit<Claim, 'id' | 'claimNumber' | 'createdAt' | 'updatedAt'>): Promise<Claim>;
   updateClaimStatus(id: string, status: Claim['status'], stage?: ClaimTimelineStage, eventNote?: string): Promise<Claim | null>;
+  applyProviderRepairUpdate(
+    claimIdentifier: string,
+    updateData: {
+      stage: ClaimTimelineStage;
+      status?: Claim['status'];
+      notes?: string;
+      repairer?: {
+        name?: string;
+        contact?: string;
+        assessorName?: string;
+        workshopAddress?: string;
+      };
+      estimatedCompletionDate?: string;
+      partsStatus?: string;
+      authorizedAmount?: number;
+      excessPayable?: number;
+    }
+  ): Promise<Claim | null>;
   addTimelineEvent(id: string, event: ClaimTimelineEvent): Promise<Claim | null>;
+}
+
+export const CANONICAL_STAGES: ClaimTimelineStage[] = [
+  'Submitted',
+  'Received',
+  'Assessed',
+  'Authorised',
+  'In Progress',
+  'Completed',
+  'Ready for Collection',
+];
+
+export function normalizeStage(rawStage: string): ClaimTimelineStage {
+  const s = (rawStage || '').trim().toLowerCase();
+  if (s.includes('submit') || s.includes('accident') || s.includes('report')) return 'Submitted';
+  if (s.includes('receiv') || s.includes('number')) return 'Received';
+  if (s.includes('assess')) return 'Assessed';
+  if (s.includes('authoris') || s.includes('authoriz')) return 'Authorised';
+  if (s.includes('progress') || s.includes('repair') || s.includes('panelbeat') || s.includes('paint')) return 'In Progress';
+  if (s.includes('complet') || s.includes('done') || s.includes('quality') || s.includes('inspect')) return 'Completed';
+  if (s.includes('ready') || s.includes('collect') || s.includes('handover') || s.includes('close') || s.includes('settle')) return 'Ready for Collection';
+  return 'In Progress';
 }
 
 const mockClaims: Claim[] = [
@@ -43,19 +83,29 @@ const mockClaims: Claim[] = [
     },
     estimatedAmount: 68500,
     settlementAmount: 68500,
-    currentStage: 'Authorisation',
-    status: 'Authorized',
+    repairerInfo: {
+      name: 'Precision Panelbeaters Sandton',
+      contact: '+27 11 883 4000',
+      assessorName: 'Markus van Zyl',
+      workshopAddress: '45 5th Street, Wynberg, Sandton',
+    },
+    partsStatus: 'OEM rear bumper and tailgate assembly dispatched from Toyota SA',
+    estimatedCompletionDate: '2026-09-26',
+    authorizedAmount: 68500,
+    excessPayable: 2500,
+    currentStage: 'In Progress',
+    status: 'Repairing',
     timeline: [
-      { stage: 'Accident Reported', date: '2026-09-08T18:30:00Z', status: 'completed', notes: 'Accident recorded and logged via Client Portal' },
-      { stage: 'Claim Submitted', date: '2026-09-09T08:15:00Z', status: 'completed', notes: 'Submitted to Santam B2B Claims Gateway' },
-      { stage: 'Claim Number Received', date: '2026-09-09T10:45:00Z', status: 'completed', notes: 'Santam internal reference #ST-99410 assigned' },
-      { stage: 'Assessment', date: '2026-09-11T14:00:00Z', status: 'completed', notes: 'Independent assessor completed digital inspection at Approved Auto Body' },
-      { stage: 'Authorisation', date: '2026-09-14T09:30:00Z', status: 'in_progress', notes: 'Parts sourcing and repair quote R68,500 authorized by Santam' },
-      { stage: 'Repair', date: '2026-09-16T08:00:00Z', status: 'pending', notes: 'Scheduled check-in with Precision Panelbeaters' },
-      { stage: 'Closed', date: '', status: 'pending', notes: 'Vehicle collection and final excess reconciliation' },
+      { stage: 'Submitted', date: '2026-09-08T18:30:00Z', status: 'completed', notes: 'Accident recorded and logged via Royal Square Client Portal' },
+      { stage: 'Received', date: '2026-09-09T10:45:00Z', status: 'completed', notes: 'Santam internal reference #ST-99410 generated and assigned' },
+      { stage: 'Assessed', date: '2026-09-11T14:00:00Z', status: 'completed', notes: 'Digital assessor Markus van Zyl completed damage assessment at Approved Auto Body' },
+      { stage: 'Authorised', date: '2026-09-14T09:30:00Z', status: 'completed', notes: 'Repair authorization R68,500 issued by Santam short-term underwriting team' },
+      { stage: 'In Progress', date: '2026-09-16T08:00:00Z', status: 'in_progress', notes: 'Precision Panelbeaters: Chassis aligned, replacement parts fitted, currently in spray booth' },
+      { stage: 'Completed', date: '', status: 'pending', notes: 'Paint bake cure, mechanical safety check, and final QC inspection' },
+      { stage: 'Ready for Collection', date: '', status: 'pending', notes: 'Vehicle collection and excess clearance certificate' },
     ],
     createdAt: '2026-09-08T18:30:00Z',
-    updatedAt: '2026-09-14T09:30:00Z',
+    updatedAt: '2026-09-16T08:00:00Z',
   },
   {
     id: 'clm_002',
@@ -76,16 +126,16 @@ const mockClaims: Claim[] = [
     },
     estimatedAmount: 42000,
     settlementAmount: 42000,
-    currentStage: 'Closed',
+    currentStage: 'Ready for Collection',
     status: 'Settled',
     timeline: [
-      { stage: 'Accident Reported', date: '2026-07-21T07:00:00Z', status: 'completed' },
-      { stage: 'Claim Submitted', date: '2026-07-21T09:30:00Z', status: 'completed' },
-      { stage: 'Claim Number Received', date: '2026-07-21T11:00:00Z', status: 'completed' },
-      { stage: 'Assessment', date: '2026-07-23T15:00:00Z', status: 'completed' },
-      { stage: 'Authorisation', date: '2026-07-25T10:00:00Z', status: 'completed' },
-      { stage: 'Repair', date: '2026-07-28T12:00:00Z', status: 'completed' },
-      { stage: 'Closed', date: '2026-08-01T16:00:00Z', status: 'completed', notes: 'Settlement disbursed directly to client account.' },
+      { stage: 'Submitted', date: '2026-07-21T07:00:00Z', status: 'completed' },
+      { stage: 'Received', date: '2026-07-21T11:00:00Z', status: 'completed' },
+      { stage: 'Assessed', date: '2026-07-23T15:00:00Z', status: 'completed' },
+      { stage: 'Authorised', date: '2026-07-25T10:00:00Z', status: 'completed' },
+      { stage: 'In Progress', date: '2026-07-28T12:00:00Z', status: 'completed' },
+      { stage: 'Completed', date: '2026-07-31T14:00:00Z', status: 'completed' },
+      { stage: 'Ready for Collection', date: '2026-08-01T16:00:00Z', status: 'completed', notes: 'Settlement disbursed directly to client Standard Bank account.' },
     ],
     createdAt: '2026-07-21T07:00:00Z',
     updatedAt: '2026-08-01T16:00:00Z',
@@ -108,39 +158,46 @@ const mockClaims: Claim[] = [
       policeReportUploaded: false,
     },
     estimatedAmount: 11500,
-    currentStage: 'Claim Number Received',
+    currentStage: 'Assessed',
     status: 'In Review',
+    repairerInfo: {
+      name: 'PG Glass Midrand',
+      contact: '+27 11 315 2200',
+    },
     timeline: [
-      { stage: 'Accident Reported', date: '2026-09-17T13:00:00Z', status: 'completed' },
-      { stage: 'Claim Submitted', date: '2026-09-17T14:30:00Z', status: 'completed' },
-      { stage: 'Claim Number Received', date: '2026-09-18T09:00:00Z', status: 'in_progress', notes: 'PG Glass replacement referral issued' },
-      { stage: 'Assessment', date: '', status: 'pending' },
-      { stage: 'Authorisation', date: '', status: 'pending' },
-      { stage: 'Repair', date: '', status: 'pending' },
-      { stage: 'Closed', date: '', status: 'pending' },
+      { stage: 'Submitted', date: '2026-09-17T13:00:00Z', status: 'completed' },
+      { stage: 'Received', date: '2026-09-18T09:00:00Z', status: 'completed', notes: 'PG Glass replacement referral issued' },
+      { stage: 'Assessed', date: '2026-09-18T14:00:00Z', status: 'in_progress', notes: 'Glass crack size assessed: Replacement windscreen ordered' },
+      { stage: 'Authorised', date: '', status: 'pending' },
+      { stage: 'In Progress', date: '', status: 'pending' },
+      { stage: 'Completed', date: '', status: 'pending' },
+      { stage: 'Ready for Collection', date: '', status: 'pending' },
     ],
     createdAt: '2026-09-17T13:00:00Z',
-    updatedAt: '2026-09-18T09:00:00Z',
-  }
+    updatedAt: '2026-09-18T14:00:00Z',
+  },
 ];
 
 export class ClaimsRepository implements IClaimsRepository {
   async getClaims(filter?: { clientId?: string; status?: string; insurer?: string }): Promise<Claim[]> {
     let results = [...mockClaims];
     if (filter?.clientId) {
-      results = results.filter(c => c.clientId === filter.clientId);
+      results = results.filter((c) => c.clientId === filter.clientId);
     }
     if (filter?.status) {
-      results = results.filter(c => c.status === filter.status);
+      results = results.filter((c) => c.status === filter.status);
     }
     if (filter?.insurer) {
-      results = results.filter(c => c.insurer.toLowerCase() === filter.insurer?.toLowerCase());
+      results = results.filter((c) => c.insurer.toLowerCase() === filter.insurer?.toLowerCase());
     }
     return results;
   }
 
   async getClaimById(id: string): Promise<Claim | null> {
-    const claim = mockClaims.find(c => c.id === id || c.claimNumber === id);
+    const cleanId = (id || '').trim().toLowerCase();
+    const claim = mockClaims.find(
+      (c) => c.id.toLowerCase() === cleanId || c.claimNumber.toLowerCase() === cleanId
+    );
     return claim ? { ...claim } : null;
   }
 
@@ -157,46 +214,135 @@ export class ClaimsRepository implements IClaimsRepository {
     return { ...newClaim };
   }
 
-  async updateClaimStatus(id: string, status: Claim['status'], stage?: ClaimTimelineStage, eventNote?: string): Promise<Claim | null> {
-    const claim = mockClaims.find(c => c.id === id || c.claimNumber === id);
+  async updateClaimStatus(
+    id: string,
+    status: Claim['status'],
+    stage?: ClaimTimelineStage,
+    eventNote?: string
+  ): Promise<Claim | null> {
+    const cleanId = (id || '').trim().toLowerCase();
+    const claim = mockClaims.find(
+      (c) => c.id.toLowerCase() === cleanId || c.claimNumber.toLowerCase() === cleanId
+    );
     if (!claim) return null;
 
     claim.status = status;
     if (stage) {
-      claim.currentStage = stage;
-      const targetEvent = claim.timeline.find(t => t.stage === stage);
+      const canonicalStage = normalizeStage(stage);
+      claim.currentStage = canonicalStage;
+
+      const targetEvent = claim.timeline.find((t) => normalizeStage(t.stage) === canonicalStage);
       if (targetEvent) {
         targetEvent.status = 'in_progress';
         targetEvent.date = new Date().toISOString();
         if (eventNote) targetEvent.notes = eventNote;
       }
-      // mark earlier stages as completed
-      const stageOrder: ClaimTimelineStage[] = [
-        'Accident Reported', 
-        'Claim Submitted', 
-        'Claim Number Received', 
-        'Assessment', 
-        'Authorisation', 
-        'Repair', 
-        'Closed'
-      ];
-      const currentIndex = stageOrder.indexOf(stage);
-      stageOrder.forEach((s, idx) => {
-        const ev = claim.timeline.find(t => t.stage === s);
+
+      const currentIndex = CANONICAL_STAGES.indexOf(canonicalStage);
+      CANONICAL_STAGES.forEach((s, idx) => {
+        const ev = claim.timeline.find((t) => normalizeStage(t.stage) === s);
         if (ev) {
-          if (idx < currentIndex) ev.status = 'completed';
-          else if (idx === currentIndex) ev.status = status === 'Settled' || status === 'Rejected' ? 'completed' : 'in_progress';
+          if (idx < currentIndex) {
+            ev.status = 'completed';
+          } else if (idx === currentIndex) {
+            ev.status =
+              status === 'Settled' || status === 'Completed' || status === 'Ready for Collection'
+                ? 'completed'
+                : 'in_progress';
+          }
         }
       });
     }
+
     claim.updatedAt = new Date().toISOString();
     return { ...claim };
   }
 
-  async addTimelineEvent(id: string, event: ClaimTimelineEvent): Promise<Claim | null> {
-    const claim = mockClaims.find(c => c.id === id);
+  async applyProviderRepairUpdate(
+    claimIdentifier: string,
+    updateData: {
+      stage: ClaimTimelineStage;
+      status?: Claim['status'];
+      notes?: string;
+      repairer?: {
+        name?: string;
+        contact?: string;
+        assessorName?: string;
+        workshopAddress?: string;
+      };
+      estimatedCompletionDate?: string;
+      partsStatus?: string;
+      authorizedAmount?: number;
+      excessPayable?: number;
+    }
+  ): Promise<Claim | null> {
+    const cleanId = (claimIdentifier || '').trim().toLowerCase();
+    const claim = mockClaims.find(
+      (c) => c.id.toLowerCase() === cleanId || c.claimNumber.toLowerCase() === cleanId
+    );
     if (!claim) return null;
-    const existingIndex = claim.timeline.findIndex(e => e.stage === event.stage);
+
+    const canonicalStage = normalizeStage(updateData.stage);
+    claim.currentStage = canonicalStage;
+
+    // Determine appropriate status based on stage if not specified
+    let nextStatus: Claim['status'] = updateData.status || claim.status;
+    if (!updateData.status) {
+      if (canonicalStage === 'Submitted') nextStatus = 'Pending';
+      else if (canonicalStage === 'Received' || canonicalStage === 'Assessed') nextStatus = 'In Review';
+      else if (canonicalStage === 'Authorised') nextStatus = 'Authorized';
+      else if (canonicalStage === 'In Progress') nextStatus = 'Repairing';
+      else if (canonicalStage === 'Completed') nextStatus = 'Completed';
+      else if (canonicalStage === 'Ready for Collection') nextStatus = 'Ready for Collection';
+    }
+    claim.status = nextStatus;
+
+    if (updateData.repairer) {
+      claim.repairerInfo = {
+        ...(claim.repairerInfo || {}),
+        ...updateData.repairer,
+      };
+    }
+    if (updateData.partsStatus) claim.partsStatus = updateData.partsStatus;
+    if (updateData.estimatedCompletionDate) claim.estimatedCompletionDate = updateData.estimatedCompletionDate;
+    if (updateData.authorizedAmount) claim.authorizedAmount = Number(updateData.authorizedAmount);
+    if (updateData.excessPayable) claim.excessPayable = Number(updateData.excessPayable);
+
+    // Update timeline stages: Mark previous completed, current in_progress/completed
+    const now = new Date().toISOString();
+    const targetIdx = CANONICAL_STAGES.indexOf(canonicalStage);
+
+    CANONICAL_STAGES.forEach((stageName, idx) => {
+      let ev = claim.timeline.find((t) => normalizeStage(t.stage) === stageName);
+      if (!ev) {
+        ev = {
+          stage: stageName,
+          date: '',
+          status: 'pending',
+        };
+        claim.timeline.push(ev);
+      }
+
+      if (idx < targetIdx) {
+        ev.status = 'completed';
+        if (!ev.date) ev.date = now;
+      } else if (idx === targetIdx) {
+        ev.status = canonicalStage === 'Completed' || canonicalStage === 'Ready for Collection' ? 'completed' : 'in_progress';
+        ev.date = now;
+        if (updateData.notes) ev.notes = updateData.notes;
+      } else {
+        ev.status = 'pending';
+      }
+    });
+
+    claim.updatedAt = now;
+    return { ...claim };
+  }
+
+  async addTimelineEvent(id: string, event: ClaimTimelineEvent): Promise<Claim | null> {
+    const claim = mockClaims.find((c) => c.id === id || c.claimNumber === id);
+    if (!claim) return null;
+    const existingIndex = claim.timeline.findIndex((e) => e.stage === event.stage);
     if (existingIndex >= 0) {
       claim.timeline[existingIndex] = event;
     } else {

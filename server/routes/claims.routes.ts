@@ -10,5 +10,6 @@ router.get('/', claimsController.getClaims);
 router.post('/', claimsController.createClaim);
 router.get('/:id', claimsController.getClaimById);
 router.put('/:id/status', claimsController.updateClaimStatus);
+router.post('/providers/:provider/:claimNumber/updates', claimsController.receiveProviderRepairUpdate);
 
 export default router;

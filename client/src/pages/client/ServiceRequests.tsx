@@ -21,9 +21,12 @@ import { DataTable, Column } from '../../components/common/DataTable.js';
 import { EmptyState } from '../../components/common/EmptyState.js';
 import { api } from '../../services/api.js';
 import { ServiceRequest, ServiceRequestType } from '../../types/index.js';
+import { useNotifications } from '../../context/NotificationContext.js';
 
 export const ServiceRequests: React.FC = () => {
+  const { fetchNotifications } = useNotifications();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +68,7 @@ export const ServiceRequests: React.FC = () => {
       setIsModalOpen(false);
       setDetails('');
       fetchRequests();
+      fetchNotifications();
     } catch (err: any) {
       alert(err.message || 'Failed to submit service request');
     } finally {

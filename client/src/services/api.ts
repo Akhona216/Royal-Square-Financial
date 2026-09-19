@@ -201,4 +201,67 @@ export const api = {
         body: JSON.stringify(data),
       }),
   },
+
+  // Notifications
+  notifications: {
+    getAll: () => request<{ notifications: any[]; stats: any }>('/notifications'),
+    markAsRead: (id: string) => 
+      request<{ success: boolean; message: string }>(`/notifications/${id}/read`, {
+        method: 'POST',
+      }),
+    markAllAsRead: () => 
+      request<{ success: boolean; message: string }>('/notifications/read-all', {
+        method: 'POST',
+      }),
+    dismiss: (id: string) => 
+      request<{ success: boolean; message: string }>(`/notifications/${id}`, {
+        method: 'DELETE',
+      }),
+    sendGreeting: (data: { clientId: string; clientName: string; message?: string }) => 
+      request<{ success: boolean; message: string; data: any }>('/notifications/send-greeting', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+
+  // Profile (Client Personal Information)
+  profile: {
+    get: (clientId?: string) => 
+      request<{ success: boolean; data: any; recentAuditLogs: any[] }>(`/profile${clientId ? `?clientId=${clientId}` : ''}`),
+    update: (data: any, clientId?: string) => 
+      request<{ success: boolean; data: any; auditEntry: any; sensitiveChangesFlagged: boolean; message: string }>(`/profile${clientId ? `?clientId=${clientId}` : ''}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    verifyBanking: (verificationMethod?: string, clientId?: string) => 
+      request<{ success: boolean; data: any; message: string }>(`/profile/verify-banking${clientId ? `?clientId=${clientId}` : ''}`, {
+        method: 'POST',
+        body: JSON.stringify({ verificationMethod }),
+      }),
+    getAuditLogs: (clientId?: string) => 
+      request<{ success: boolean; data: any[] }>(`/profile/audit-logs${clientId ? `?clientId=${clientId}` : ''}`),
+  },
+
+  // Insurer B2B Telemetry & Repair updates
+  providers: {
+    sendRepairUpdate: (provider: string, claimNumber: string, data: {
+      stage: string;
+      status?: string;
+      notes?: string;
+      repairer?: {
+        name?: string;
+        contact?: string;
+        assessorName?: string;
+        workshopAddress?: string;
+      };
+      estimatedCompletionDate?: string;
+      partsStatus?: string;
+      authorizedAmount?: number;
+      excessPayable?: number;
+    }) => 
+      request<{ success: boolean; message: string; data: any; notifications: any; auditEntry: any }>(`/providers/${provider}/claims/${claimNumber}/updates`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
 };

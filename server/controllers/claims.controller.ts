@@ -60,6 +60,23 @@ export class ClaimsController {
       Next(error);
     }
   }
+
+  async receiveProviderRepairUpdate(req: Request, res: Response, Next: NextFunction) {
+    try {
+      const { provider, claimNumber } = req.params;
+      const result = await claimsService.processProviderRepairUpdate(provider, claimNumber, req.body);
+
+      return res.status(200).json({
+        success: true,
+        message: `Vehicle repair telemetry from ${provider.toUpperCase()} processed successfully for claim #${claimNumber}`,
+        data: result.claim,
+        notifications: result.notifications,
+        auditEntry: result.auditEntry,
+      });
+    } catch (error: any) {
+      Next(error);
+    }
+  }
 }
 
 export const claimsController = new ClaimsController();
