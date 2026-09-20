@@ -9,6 +9,7 @@ router.use(authMiddleware);
 
 // Adviser specific endpoints
 router.get('/adviser/dashboard', adviserController.getDashboard);
+router.get('/adviser/actions', adviserController.getActions);
 router.get('/adviser/clients', adviserController.getClients);
 router.get('/adviser/clients/:id', adviserController.getClientDeepDive);
 router.get('/adviser/tasks', adviserController.getTasks);

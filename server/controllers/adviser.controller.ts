@@ -13,6 +13,16 @@ export class AdviserController {
     }
   }
 
+  async getActions(req: Request, res: Response, Next: NextFunction) {
+    try {
+      const adviserId = (req as any).user?.id || 'usr_adv_001';
+      const actions = await adviserService.getActions(adviserId);
+      return res.status(200).json({ success: true, data: actions });
+    } catch (error: any) {
+      Next(error);
+    }
+  }
+
   async getClients(req: Request, res: Response, Next: NextFunction) {
     try {
       const query = req.query.q as string;

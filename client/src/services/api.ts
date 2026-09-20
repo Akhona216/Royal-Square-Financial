@@ -162,6 +162,7 @@ export const api = {
   // Adviser specifics
   adviser: {
     getDashboard: () => request<any>('/adviser/dashboard'),
+    getActions: () => request<any[]>('/adviser/actions'),
     getClients: (q?: string) => request<any[]>(`/adviser/clients${q ? `?q=${encodeURIComponent(q)}` : ''}`),
     getClientDeepDive: (id: string) => request<any>(`/adviser/clients/${id}`),
     getTasks: (filter?: string) => request<any[]>(`/adviser/tasks${filter ? `?filter=${encodeURIComponent(filter)}` : ''}`),

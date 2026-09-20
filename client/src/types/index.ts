@@ -208,6 +208,35 @@ export interface TaskItem {
   category: 'Compliance' | 'Review' | 'Claim Follow-up' | 'Quote' | 'Service Request';
 }
 
+export type AdviserActionPriority = 'Urgent' | 'High' | 'Medium' | 'Low';
+export type AdviserActionStatus = 'New' | 'In Progress' | 'Waiting' | 'Completed';
+export type AdviserActionType =
+  | 'New claim requiring review'
+  | 'Missing client document'
+  | 'New service request'
+  | 'Claim update requires adviser action'
+  | 'Client profile updated'
+  | 'Policy renewal approaching'
+  | 'Upcoming client review'
+  | 'Adviser follow-up';
+
+export interface AdviserActionItem {
+  id: string;
+  type: AdviserActionType;
+  title: string;
+  clientId: string;
+  clientName: string;
+  priority: AdviserActionPriority;
+  status: AdviserActionStatus;
+  dateTime: string;
+  requiredAction: string;
+  link: string;
+  recordType: 'claim' | 'document' | 'service-request' | 'profile' | 'policy' | 'calendar' | 'task';
+  recordId?: string;
+  claimNumber?: string;
+  metadata?: Record<string, any>;
+}
+
 export interface CalendarAppointment {
   id: string;
   adviserId: string;

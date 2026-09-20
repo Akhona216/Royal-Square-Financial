@@ -26,7 +26,6 @@ import { TasksReminders } from './pages/adviser/TasksReminders.js';
 import { ClaimsOverview } from './pages/adviser/ClaimsOverview.js';
 import { ServiceRequestsQueue } from './pages/adviser/ServiceRequestsQueue.js';
 import { CalendarPage } from './pages/adviser/Calendar.js';
-import { IntegrationsHub } from './pages/adviser/IntegrationsHub.js';
 
 const RootRedirect: React.FC = () => {
   const { user, role } = useAuth();
@@ -105,7 +104,6 @@ export const AppContent: React.FC = () => {
           <Route path="claims" element={<ClaimsOverview />} />
           <Route path="service-requests" element={<ServiceRequestsQueue />} />
           <Route path="calendar" element={<CalendarPage />} />
-          <Route path="integrations" element={<IntegrationsHub />} />
         </Route>
 
         {/* Catch-all */}

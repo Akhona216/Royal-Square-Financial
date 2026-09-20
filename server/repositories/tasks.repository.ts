@@ -90,6 +90,23 @@ export class TasksRepository {
     return { ...task };
   }
 
+  async upsertClaimFollowUp(data: Omit<TaskItem, 'id'>): Promise<TaskItem> {
+    const existing = this.tasks.find((task) => task.claimId === data.claimId && task.status === 'Pending');
+    if (existing) {
+      Object.assign(existing, data);
+      return { ...existing };
+    }
+    return this.createTask(data);
+  }
+
+  async completeClaimFollowUps(claimId: string): Promise<void> {
+    this.tasks.forEach((task) => {
+      if (task.claimId === claimId && task.status === 'Pending') {
+        task.status = 'Completed';
+      }
+    });
+  }
+
   async deleteTask(id: string): Promise<boolean> {
     const initialLen = this.tasks.length;
     this.tasks = this.tasks.filter(t => t.id !== id);

@@ -13,7 +13,6 @@ import {
   CheckSquare,
   ClipboardList,
   Calendar,
-  Network,
   ShieldCheck,
   Award,
 } from 'lucide-react';
@@ -41,7 +40,6 @@ export const Sidebar: React.FC = () => {
     { label: 'Claims Overview', path: '/adviser/claims', icon: CarFront },
     { label: 'Service Requests Queue', path: '/adviser/service-requests', icon: ClipboardList },
     { label: 'Calendar & Reviews', path: '/adviser/calendar', icon: Calendar },
-    { label: 'Integrations Hub', path: '/adviser/integrations', icon: Network },
   ];
 
   const currentNav = role === 'adviser' ? adviserNav : clientNav;

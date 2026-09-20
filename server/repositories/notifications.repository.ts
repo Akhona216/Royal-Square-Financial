@@ -342,24 +342,26 @@ export class NotificationsRepository {
     const { claim, provider, stage, notes, repairerName } = payload;
     const now = new Date().toISOString();
 
+    const clientMessage = stage === 'Ready for Collection'
+      ? `Your vehicle is ready for collection. Please contact your adviser for collection arrangements.`
+      : `Your motor claim has been updated to the "${stage}" stage. Your adviser will contact you if any action is required.`;
+
     const clientNotif: NotificationItem = {
       id: `notif_clm_client_${claim.id}_${Date.now()}`,
       type: 'claim_update',
-      title: `Vehicle Repair Milestone: Stage "${stage}"`,
-      message: `${provider.toUpperCase()} & ${repairerName || 'Approved Panelbeaters'} updated Claim #${claim.claimNumber}: Stage advanced to "${stage}". ${notes ? `Note: "${notes}"` : ''}`,
+      title: 'Motor Claim Update',
+      message: clientMessage,
       timestamp: now,
       read: false,
       priority: 'high',
       targetRole: 'client',
       clientId: claim.clientId,
       referenceId: claim.id,
-      link: '/claims',
+      link: '/client/claims',
       actionLabel: 'View Repair Timeline',
       metadata: {
         claimNumber: claim.claimNumber,
-        provider,
         stage,
-        repairerName,
       },
     };
 
@@ -390,6 +392,32 @@ export class NotificationsRepository {
     return { clientNotif, adviserNotif };
   }
 
+  addProviderUpdateNotification(payload: {
+    claim: any;
+    provider: string;
+    stage: string;
+    notes?: string;
+  }): NotificationItem {
+    const { claim, provider, stage, notes } = payload;
+    const notification: NotificationItem = {
+      id: `notif_clm_provider_${claim.id}_${Date.now()}`,
+      type: 'claim_update',
+      title: `Claim Update Requires Adviser Action: ${claim.claimNumber}`,
+      message: `${provider.toUpperCase()} supplied a provider update for claim #${claim.claimNumber}. Stage: "${stage}".${notes ? ` Internal provider note: "${notes}"` : ''}`,
+      timestamp: new Date().toISOString(),
+      read: false,
+      priority: 'high',
+      targetRole: 'adviser',
+      clientId: claim.clientId,
+      referenceId: claim.id,
+      link: '/adviser/claims',
+      actionLabel: 'Review Provider Update',
+      metadata: { claimNumber: claim.claimNumber, provider, stage },
+    };
+    this.customNotifications.unshift(notification);
+    return notification;
+  }
+
   addServiceRequestNotification(serviceRequest: any, eventType: 'created' | 'updated'): void {
     const isNew = eventType === 'created';
     const notif: NotificationItem = {
@@ -408,7 +436,7 @@ export class NotificationsRepository {
       clientId: serviceRequest.clientId,
       clientName: serviceRequest.clientName,
       referenceId: serviceRequest.id,
-      link: '/adviser/services',
+      link: '/adviser/service-requests',
       actionLabel: 'View in Queue',
       metadata: {
         requestType: serviceRequest.type,
